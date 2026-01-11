@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Parser</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #f8faf9;
+            min-height: 100vh;
+            color: #1a1a1a;
+        }
+        
+        .app { display: flex; flex-direction: column; min-height: 100vh; }
+        
+        header {
+            background: white;
+            border-bottom: 1px solid #e8efe8;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .logo { display: flex; align-items: center; gap: 0.75rem; }
+        
+        .logo-icon {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+        }
+        
+        .logo-text { font-size: 1.5rem; font-weight: 700; }
+        .logo-text span { color: #22c55e; }
+        
+        .header-stats { display: flex; align-items: center; gap: 2rem; }
+        
+        .stat-item { text-align: center; }
+        .stat-value { font-size: 1.75rem; font-weight: 700; color: #22c55e; font-family: 'JetBrains Mono', monospace; }
+        .stat-label { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .status-pill { padding: 0.5rem 1.25rem; border-radius: 50px; font-size: 0.9rem; font-weight: 600; }
+        .status-success { background: #dcfce7; color: #166534; }
+        .status-review { background: #fef3c7; color: #92400e; }
+        .status-idle { background: #f3f4f6; color: #6b7280; }
+        
+        .main-content { flex: 1; padding: 1.5rem 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
+        
+        .upload-strip {
+            background: white;
+            border-radius: 16px;
+            padding: 1.25rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+        
+        .upload-zone {
+            width: 140px; height: 110px;
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fafafa;
+            flex-shrink: 0;
+        }
+        
+        .upload-zone:hover { border-color: #22c55e; background: rgba(34,197,94,0.05); }
+        .upload-zone .icon { font-size: 2rem; margin-bottom: 0.25rem; }
+        .upload-zone .text { font-size: 0.85rem; color: #6b7280; font-weight: 500; }
+        input[type="file"] { display: none; }
+        
+        .previews { display: flex; gap: 1rem; flex: 1; overflow-x: auto; padding: 0.25rem; }
+        
+        .preview-item {
+            position: relative; flex-shrink: 0; width: 150px;
+            border-radius: 12px; overflow: hidden;
+            border: 2px solid #e5e7eb; background: white;
+            transition: all 0.2s;
+        }
+        
+        .preview-item:hover { border-color: #22c55e; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        .preview-item img { width: 100%; height: 100px; object-fit: cover; cursor: pointer; }
+        .preview-item .label { padding: 0.5rem; text-align: center; font-size: 0.8rem; font-weight: 600; color: #374151; background: #f9fafb; }
+        
+        .preview-item .remove {
+            position: absolute; top: 6px; right: 6px;
+            width: 24px; height: 24px;
+            background: #ef4444; color: white;
+            border: none; border-radius: 50%;
+            font-size: 14px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.2s;
+        }
+        
+        .preview-item:hover .remove { opacity: 1; }
+        
+        .btn-group { display: flex; gap: 0.75rem; flex-shrink: 0; }
+        
+        .demo-btn {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white; border: none;
+            padding: 1rem 1.5rem;
+            font-size: 1rem; font-weight: 600;
+            border-radius: 12px; cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        
+        .demo-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4); }
+        .demo-btn.active { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
+        
+        .process-btn {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white; border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem; font-weight: 600;
+            border-radius: 12px; cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+        }
+        
+        .process-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(34, 197, 94, 0.4); }
+        .process-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .results-area { flex: 1; display: grid; grid-template-columns: 1fr 1.4fr; gap: 1.5rem; }
+        @media (max-width: 1200px) { .results-area { grid-template-columns: 1fr; } }
+        
+        .panel {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .panel-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        .panel-title { font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+        .panel-body { flex: 1; padding: 1.25rem; overflow-y: auto; }
+        
+        .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; height: 100%; }
+        
+        .column { background: #f8faf9; border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; }
+        .col-veg { border-left: 4px solid #22c55e; }
+        .col-review { border-left: 4px solid #f59e0b; }
+        
+        .col-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e5e7eb; }
+        .col-title { font-size: 0.95rem; font-weight: 600; color: #374151; }
+        .col-count { background: #e5e7eb; padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
+        
+        .items { flex: 1; overflow-y: auto; list-style: none; }
+        
+        .item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.75rem 1rem;
+            background: white; border-radius: 10px;
+            margin-bottom: 0.5rem;
+            transition: all 0.15s;
+        }
+        
+        .item:hover { transform: translateX(4px); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .item-info { flex: 1; }
+        .item-name { font-size: 0.95rem; font-weight: 600; }
+        .item-meta { font-size: 0.75rem; color: #9ca3af; margin-top: 0.15rem; }
+        .item-price { font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 700; color: #22c55e; }
+        
+        .low-conf { background: #fef3c7; border: 1px solid #fcd34d; }
+        .low-conf .item-name { color: #92400e; }
+        .low-conf .item-price { color: #d97706; }
+        
+        .review-actions { display: flex; gap: 0.4rem; margin-right: 0.75rem; }
+        
+        .review-btn {
+            width: 36px; height: 36px;
+            border: none; border-radius: 8px;
+            font-size: 1.1rem; cursor: pointer;
+            transition: all 0.15s;
+        }
+        
+        .review-btn-yes { background: #dcfce7; color: #166534; }
+        .review-btn-no { background: #fee2e2; color: #991b1b; }
+        .review-btn:hover { transform: scale(1.1); }
+        .review-btn.active { transform: scale(1.15); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .review-btn-yes.active { background: #22c55e; color: white; }
+        .review-btn-no.active { background: #ef4444; color: white; }
+        
+        .images-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+        
+        .image-card { background: #f8faf9; border-radius: 12px; padding: 1rem; border: 1px solid #e8efe8; }
+        
+        .image-header {
+            display: flex; align-items: center; gap: 1rem;
+            margin-bottom: 1rem; padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .image-thumb {
+            width: 70px; height: 55px;
+            object-fit: cover; border-radius: 8px;
+            cursor: pointer; border: 2px solid #e5e7eb;
+            transition: all 0.2s;
+        }
+        
+        .image-thumb:hover { border-color: #22c55e; transform: scale(1.05); }
+        .image-meta h4 { font-size: 1rem; font-weight: 700; }
+        .image-meta p { font-size: 0.8rem; color: #6b7280; }
+        .image-total { margin-left: auto; text-align: right; }
+        .image-total .amount { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 700; color: #22c55e; }
+        .image-total .label { font-size: 0.7rem; color: #9ca3af; text-transform: uppercase; }
+        
+        .image-lists { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .image-list { background: white; border-radius: 8px; padding: 0.75rem; }
+        .image-list-title { font-size: 0.8rem; font-weight: 600; color: #6b7280; margin-bottom: 0.5rem; }
+        .image-list-item { display: flex; justify-content: space-between; padding: 0.4rem 0; font-size: 0.85rem; border-bottom: 1px solid #f3f4f6; }
+        .image-list-item:last-child { border-bottom: none; }
+        .image-list-item .name { color: #374151; }
+        .image-list-item .price { font-weight: 600; color: #22c55e; }
+        
+        .empty { color: #9ca3af; font-style: italic; font-size: 0.85rem; }
+        
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #9ca3af; text-align: center; padding: 3rem; }
+        .empty-state .icon { font-size: 4rem; margin-bottom: 1rem; }
+        .empty-state p { font-size: 1.1rem; }
+        
+        .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 3rem; }
+        
+        .spinner { width: 48px; height: 48px; border: 4px solid #e5e7eb; border-top-color: #22c55e; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .hitl-banner {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #fbbf24;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        .hitl-banner .text { font-weight: 700; color: #92400e; font-size: 1rem; }
+        .hitl-banner .sub { font-size: 0.85rem; color: #a16207; margin-top: 0.25rem; }
+        
+        .submit-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white; border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.95rem; font-weight: 600;
+            border-radius: 10px; cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(245,158,11,0.4); }
+        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .modal {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.9); z-index: 1000;
+            justify-content: center; align-items: center;
+        }
+        
+        .modal.open { display: flex; }
+        .modal img { max-width: 90%; max-height: 90%; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        
+        .modal-close {
+            position: absolute; top: 24px; right: 24px;
+            background: white; border: none;
+            width: 44px; height: 44px;
+            border-radius: 50%; font-size: 24px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        
+        .api-toggle {
+            background: none;
+            border: 1px solid #e5e7eb;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #6b7280;
+            cursor: pointer;
+        }
+        
+        .api-input {
+            display: none;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            width: 220px;
+        }
+        
+        .api-input.show { display: block; }
+        
+        .feedback-info {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: #166534;
+        }
+        
+        .feedback-info strong { display: block; margin-bottom: 0.25rem; }
+        
+        .conf-warning {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: #fef3c7;
+            color: #92400e;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        
+        .data-section {
+            margin-top: 2rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            overflow: hidden;
+        }
+        
+        .data-header {
+            padding: 1rem 1.5rem;
+            background: #f8faf9;
+            border-bottom: 1px solid #e8efe8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .data-header h3 { font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .data-header .badge { 
+            background: #dcfce7; color: #166534; 
+            padding: 0.2rem 0.6rem; border-radius: 12px; 
+            font-size: 0.75rem; font-weight: 600;
+        }
+        
+        .data-table-wrapper { overflow-x: auto; }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        
+        .data-table th {
+            background: #f9fafb;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s;
+        }
+        
+        .data-table th:hover { background: #f3f4f6; }
+        
+        .data-table th.sortable::after {
+            content: '⇅';
+            margin-left: 0.5rem;
+            opacity: 0.3;
+            font-size: 0.7rem;
+        }
+        
+        .data-table th.sort-asc::after {
+            content: '↑';
+            opacity: 1;
+            color: #22c55e;
+        }
+        
+        .data-table th.sort-desc::after {
+            content: '↓';
+            opacity: 1;
+            color: #22c55e;
+        }
+        
+        .data-table .cell-row {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #9ca3af;
+            text-align: center;
+            width: 40px;
+        }
+        
+        .data-table td {
+            padding: 0.65rem 1rem;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: middle;
+        }
+        
+        .data-table tr:hover { background: #f8faf9; }
+        
+        .data-table .cell-img { 
+            font-family: 'JetBrains Mono', monospace;
+            background: #f3f4f6;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+        
+        .data-table .cell-veg {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .cell-veg.yes { background: #dcfce7; color: #166534; }
+        .cell-veg.no { background: #fee2e2; color: #991b1b; }
+        .cell-veg.unknown { background: #fef3c7; color: #92400e; }
+        
+        .data-table .cell-method {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .data-table .cell-conf {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .data-table .cell-evidence {
+            max-width: 200px;
+            font-size: 0.75rem;
+            color: #6b7280;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .data-table .cell-reasoning {
+            max-width: 180px;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+        
+        .download-btn {
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .download-btn:hover { background: #e5e7eb; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">🥬</div>
+                <div class="logo-text">Menu <span>Parser</span></div>
+            </div>
+            
+            <div class="header-stats">
+                <div class="stat-item" id="totalStat" style="display:none;">
+                    <div class="stat-value" id="totalValue">$0.00</div>
+                    <div class="stat-label">Vegetarian Total</div>
+                </div>
+                <div class="stat-item" id="itemsStat" style="display:none;">
+                    <div class="stat-value" id="itemsValue">0</div>
+                    <div class="stat-label">Items Found</div>
+                </div>
+                <span class="status-pill status-idle" id="statusPill">Ready</span>
+            </div>
+            
+            <div style="display:flex;gap:0.75rem;align-items:center;">
+                <input type="text" class="api-input" id="apiUrl" value="http://localhost:8000">
+                <button class="api-toggle" onclick="document.getElementById('apiUrl').classList.toggle('show')">⚙️ API</button>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="upload-strip">
+                <div class="upload-zone" id="dropZone">
+                    <div class="icon">📷</div>
+                    <div class="text">Drop or click</div>
+                    <input type="file" id="fileInput" accept="image/*" multiple>
+                </div>
+                <div class="previews" id="previews"></div>
+                <div class="btn-group">
+                    <button class="demo-btn" id="demoBtn" onclick="toggleDemoMode()">
+                        <span>🧪</span> Demo Review Mode
+                    </button>
+                    <button class="process-btn" id="processBtn" disabled>🔍 Process Menu</button>
+                </div>
+            </div>
+            
+            <div class="results-area">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">📊 Classification Summary</div>
+                    </div>
+                    <div class="panel-body" id="summaryBody">
+                        <div class="empty-state">
+                            <div class="icon">🥗</div>
+                            <p>Upload menu images to detect vegetarian dishes</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">📷 Results by Image</div>
+                    </div>
+                    <div class="panel-body" id="imagesBody">
+                        <div class="empty-state">
+                            <div class="icon">🖼️</div>
+                            <p>Per-image breakdown will appear here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="data-section" id="dataSection" style="display:none;">
+                <div class="data-header">
+                    <h3>📋 Complete Data Mapping <span class="badge" id="dataCount">0 items</span></h3>
+                    <button class="download-btn" onclick="downloadCSV()">📥 Export CSV</button>
+                </div>
+                <div class="data-table-wrapper">
+                    <table class="data-table" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th class="sortable" data-sort="source_image" onclick="sortTable('source_image')">Image</th>
+                                <th class="sortable" data-sort="name" onclick="sortTable('name')">Item Name</th>
+                                <th class="sortable" data-sort="price" onclick="sortTable('price')">Price</th>
+                                <th class="sortable" data-sort="is_vegetarian" onclick="sortTable('is_vegetarian')">Vegetarian</th>
+                                <th class="sortable" data-sort="confidence" onclick="sortTable('confidence')">Confidence</th>
+                                <th class="sortable" data-sort="method" onclick="sortTable('method')">Method</th>
+                                <th>Related Ingredients</th>
+                                <th>Evidence</th>
+                                <th>Reasoning</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="modal">
+        <button class="modal-close" onclick="closeModal()">×</button>
+        <img id="modalImg" src="">
+    </div>
+    
+    <script>
+        const $ = id => document.getElementById(id);
+        let files = [], urls = [], requestId = null, corrections = {}, demoMode = false;
+        
+        $('dropZone').onclick = () => $('fileInput').click();
+        $('dropZone').ondragover = e => { e.preventDefault(); $('dropZone').style.borderColor = '#22c55e'; };
+        $('dropZone').ondragleave = () => $('dropZone').style.borderColor = '#d1d5db';
+        $('dropZone').ondrop = e => { e.preventDefault(); $('dropZone').style.borderColor = '#d1d5db'; addFiles(e.dataTransfer.files); };
+        $('fileInput').onchange = e => addFiles(e.target.files);
+        
+        function addFiles(newFiles) {
+            files = [...files, ...Array.from(newFiles).filter(f => f.type.startsWith('image/'))].slice(0, 5);
+            renderPreviews();
+        }
+        
+        function renderPreviews() {
+            urls.forEach(u => URL.revokeObjectURL(u));
+            urls = files.map(f => URL.createObjectURL(f));
+            $('previews').innerHTML = files.map((f, i) => `
+                <div class="preview-item">
+                    <img src="${urls[i]}" onclick="openModal('${urls[i]}')">
+                    <button class="remove" onclick="removeFile(${i})">×</button>
+                    <div class="label">Image ${i + 1}</div>
+                </div>
+            `).join('');
+            $('processBtn').disabled = !files.length;
+        }
+        
+        function removeFile(i) { files.splice(i, 1); renderPreviews(); }
+        function openModal(src) { $('modalImg').src = src; $('modal').classList.add('open'); }
+        function closeModal() { $('modal').classList.remove('open'); }
+        $('modal').onclick = e => e.target === $('modal') && closeModal();
+        
+        function toggleDemoMode() {
+            demoMode = !demoMode;
+            $('demoBtn').classList.toggle('active', demoMode);
+            if (demoMode) showDemoReview();
+        }
+        
+        function showDemoReview() {
+            requestId = 'demo-' + Date.now();
+            const demoData = {
+                request_id: requestId,
+                status: 'needs_review',
+                partial_sum: 55.00,
+                confident_items: [
+                    { name: 'Greek Salad', price: 8.50, confidence: 0.95, source_image: 1 },
+                    { name: 'Veggie Burger', price: 12.00, confidence: 0.95, source_image: 1 },
+                    { name: 'Naan Bread', price: 3.50, confidence: 1.0, source_image: 3 },
+                    { name: 'Dal Makhani', price: 11.00, confidence: 0.92, source_image: 3 },
+                    { name: 'Vegetable Biryani', price: 12.50, confidence: 0.95, source_image: 3 },
+                    { name: 'Margherita Pizza', price: 14.00, confidence: 0.85, source_image: 4 },
+                    { name: 'Pasta Primavera', price: 13.50, confidence: 0.90, source_image: 4 },
+                ],
+                uncertain_items: [
+                    { name: 'French Fries', price: 5.00, confidence: 0.45, source_image: 1, suggested_classification: true },
+                    { name: 'Caesar Salad', price: 9.50, confidence: 0.25, source_image: 1, suggested_classification: false },
+                    { name: 'Pad Thai', price: 14.00, confidence: 0.40, source_image: 2, suggested_classification: false },
+                    { name: 'Vegetable Spring Rolls', price: 7.50, confidence: 0.48, source_image: 2 },
+                    { name: 'Tom Yum Soup', price: 8.00, confidence: 0.35, source_image: 2, suggested_classification: false },
+                    { name: 'Samosas', price: 6.00, confidence: 0.42, source_image: 3 },
+                    { name: 'Mushroom Risotto', price: 18.00, confidence: 0.50, source_image: 4, suggested_classification: true },
+                    { name: 'Tiramisu', price: 8.00, confidence: 0.38, source_image: 4 },
+                ],
+                all_items: [
+                    { name: 'Greek Salad', price: 8.50, confidence: 0.95, source_image: 1, is_vegetarian: true, method: 'rag', currency: 'USD', related_ingredients: ['lettuce', 'feta', 'olives'], evidence: ['greek salad: Mediterranean vegetable salad'], reasoning: 'Classic vegetable-based dish' },
+                    { name: 'Veggie Burger', price: 12.00, confidence: 0.95, source_image: 1, is_vegetarian: true, method: 'keyword', currency: 'USD', related_ingredients: [], evidence: [], reasoning: 'Contains veggie keyword' },
+                    { name: 'French Fries', price: 5.00, confidence: 0.45, source_image: 1, is_vegetarian: null, method: 'llm_batch', currency: 'USD', related_ingredients: ['potato'], evidence: ['potato: Vegetable'], reasoning: 'May be cooked in animal fat' },
+                    { name: 'Caesar Salad', price: 9.50, confidence: 0.25, source_image: 1, is_vegetarian: false, method: 'rag', currency: 'USD', related_ingredients: ['anchovy'], evidence: ['caesar dressing: Contains anchovies'], reasoning: 'Traditional dressing has fish' },
+                    { name: 'Chicken Wings', price: 13.00, confidence: 0.95, source_image: 1, is_vegetarian: false, method: 'keyword', currency: 'USD', related_ingredients: [], evidence: [], reasoning: 'Contains chicken keyword' },
+                    { name: 'Pad Thai', price: 14.00, confidence: 0.40, source_image: 2, is_vegetarian: false, method: 'llm_batch', currency: 'USD', related_ingredients: ['fish sauce'], evidence: ['pad thai: Often contains fish sauce'], reasoning: 'Fish sauce common' },
+                    { name: 'Vegetable Spring Rolls', price: 7.50, confidence: 0.48, source_image: 2, is_vegetarian: true, method: 'llm_batch', currency: 'USD', related_ingredients: ['cabbage', 'carrot'], evidence: ['spring rolls: Asian appetizer'], reasoning: 'Vegetable filling' },
+                    { name: 'Veggie Stir Fry', price: 11.50, confidence: 0.95, source_image: 2, is_vegetarian: true, method: 'keyword', currency: 'USD', related_ingredients: [], evidence: [], reasoning: 'Contains veggie keyword' },
+                    { name: 'Tom Yum Soup', price: 8.00, confidence: 0.35, source_image: 2, is_vegetarian: false, method: 'rag', currency: 'USD', related_ingredients: ['shrimp paste'], evidence: ['tom yum: Thai soup with shrimp'], reasoning: 'Contains shrimp paste' },
+                    { name: 'Naan Bread', price: 3.50, confidence: 1.0, source_image: 3, is_vegetarian: true, method: 'llm_batch', currency: 'USD', related_ingredients: ['flour', 'yeast'], evidence: ['naan: Indian flatbread'], reasoning: 'Plain bread, vegetarian' },
+                    { name: 'Dal Makhani', price: 11.00, confidence: 0.92, source_image: 3, is_vegetarian: true, method: 'llm_batch', currency: 'USD', related_ingredients: ['lentils', 'cream'], evidence: ['dal: Lentil-based Indian dish'], reasoning: 'Lentil curry' },
+                    { name: 'Vegetable Biryani', price: 12.50, confidence: 0.95, source_image: 3, is_vegetarian: true, method: 'keyword', currency: 'USD', related_ingredients: [], evidence: [], reasoning: 'Contains vegetable keyword' },
+                    { name: 'Samosas', price: 6.00, confidence: 0.42, source_image: 3, is_vegetarian: null, method: 'llm_batch', currency: 'USD', related_ingredients: ['potato', 'peas'], evidence: ['samosa: Indian pastry'], reasoning: 'Could be meat or veg' },
+                    { name: 'Butter Chicken', price: 15.00, confidence: 0.95, source_image: 3, is_vegetarian: false, method: 'keyword', currency: 'USD', related_ingredients: [], evidence: [], reasoning: 'Contains chicken keyword' },
+                    { name: 'Margherita Pizza', price: 14.00, confidence: 0.85, source_image: 4, is_vegetarian: true, method: 'rag', currency: 'USD', related_ingredients: ['tomato', 'mozzarella', 'basil'], evidence: ['margherita pizza: Classic cheese pizza'], reasoning: 'Cheese and tomato pizza' },
+                    { name: 'Pasta Primavera', price: 13.50, confidence: 0.90, source_image: 4, is_vegetarian: true, method: 'keyword', currency: 'USD', related_ingredients: [], evidence: [], reasoning: 'Vegetable pasta dish' },
+                    { name: 'Mushroom Risotto', price: 18.00, confidence: 0.50, source_image: 4, is_vegetarian: true, method: 'llm_batch', currency: 'USD', related_ingredients: ['mushroom', 'rice', 'parmesan'], evidence: ['risotto: Italian rice dish'], reasoning: 'May use chicken stock' },
+                    { name: 'Tiramisu', price: 8.00, confidence: 0.38, source_image: 4, is_vegetarian: null, method: 'llm_batch', currency: 'USD', related_ingredients: ['mascarpone', 'coffee', 'eggs'], evidence: ['tiramisu: Italian dessert'], reasoning: 'Contains eggs, vegetarian status depends on definition' },
+                    { name: 'Chicken Parmesan', price: 17.00, confidence: 0.95, source_image: 4, is_vegetarian: false, method: 'keyword', currency: 'USD', related_ingredients: [], evidence: [], reasoning: 'Contains chicken keyword' },
+                ]
+            };
+            render(demoData);
+        }
+        
+        $('processBtn').onclick = async () => {
+            $('processBtn').disabled = true;
+            $('processBtn').textContent = '⏳ Processing...';
+            corrections = {};
+            demoMode = false;
+            $('demoBtn').classList.remove('active');
+            
+            $('statusPill').className = 'status-pill status-idle';
+            $('statusPill').textContent = 'Processing...';
+            $('totalStat').style.display = 'none';
+            $('itemsStat').style.display = 'none';
+            
+            $('summaryBody').innerHTML = '<div class="loading"><div class="spinner"></div><p>Analyzing menus...</p></div>';
+            $('imagesBody').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            
+            const form = new FormData();
+            files.forEach(f => form.append('files', f));
+            
+            try {
+                const res = await fetch(`${$('apiUrl').value}/process-menu`, { method: 'POST', body: form });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Error');
+                requestId = data.request_id;
+                render(data);
+            } catch (e) {
+                $('summaryBody').innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>${e.message}</p></div>`;
+                $('imagesBody').innerHTML = '';
+            } finally {
+                $('processBtn').disabled = false;
+                $('processBtn').textContent = '🔍 Process Menu';
+            }
+        };
+        
+        function setCorrection(name, isVeg) {
+            corrections[name] = isVeg;
+            document.querySelectorAll(`[data-name="${name}"] .review-btn`).forEach(b => b.classList.remove('active'));
+            document.querySelector(`[data-name="${name}"] .review-btn-${isVeg ? 'yes' : 'no'}`)?.classList.add('active');
+            updateSubmitBtn();
+        }
+        
+        function updateSubmitBtn() {
+            const btn = $('submitBtn');
+            if (btn) {
+                const n = Object.keys(corrections).length;
+                btn.disabled = !n;
+                btn.textContent = n ? `Submit ${n} Correction${n > 1 ? 's' : ''}` : 'Select items';
+            }
+        }
+        
+        async function submitReview() {
+            if (demoMode) {
+                alert('🧪 Demo Mode\n\nIn production, this would:\n\n1. POST corrections to /review\n2. Log feedback to JSONL file\n3. Recompute vegetarian totals\n4. Return final results\n\nFeedback is stored for:\n• Knowledge base updates\n• Model fine-tuning\n• Accuracy analysis');
+                return;
+            }
+            
+            const btn = $('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+            
+            try {
+                const res = await fetch(`${$('apiUrl').value}/review`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        request_id: requestId, 
+                        corrections: Object.entries(corrections).map(([name, is_vegetarian]) => ({ name, is_vegetarian })) 
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail);
+                corrections = {};
+                render({ ...data, status: 'success' }, data.applied_corrections);
+            } catch (e) {
+                alert('Failed: ' + e.message);
+                btn.disabled = false;
+                updateSubmitBtn();
+            }
+        }
+        
+        function render(data, appliedCorrections = 0) {
+            const isReview = data.status === 'needs_review';
+            const vegItems = data.vegetarian_items || data.confident_items || [];
+            const uncItems = data.uncertain_items || [];
+            const total = isReview ? data.partial_sum : data.total_sum;
+            
+            // Auto-add low confidence items (<50%) to uncertain even in success mode
+            const lowConfItems = vegItems.filter(i => (i.confidence || 1) < 0.5);
+            const highConfItems = vegItems.filter(i => (i.confidence || 1) >= 0.5);
+            const allUncertain = [...uncItems, ...lowConfItems];
+            const hasReviewItems = allUncertain.length > 0;
+            
+            $('statusPill').className = `status-pill ${hasReviewItems ? 'status-review' : 'status-success'}`;
+            $('statusPill').textContent = hasReviewItems ? '⚠️ Review Needed' : '✅ Complete';
+            
+            $('totalStat').style.display = 'block';
+            $('itemsStat').style.display = 'block';
+            $('totalValue').textContent = `$${total.toFixed(2)}`;
+            $('itemsValue').textContent = vegItems.length + uncItems.length;
+            
+            let successMsg = appliedCorrections > 0 ? `
+                <div class="feedback-info">
+                    <strong>✅ ${appliedCorrections} correction(s) applied!</strong>
+                    Your feedback has been logged and will be used to improve future classifications.
+                </div>
+            ` : '';
+            
+            let hitl = hasReviewItems ? `
+                <div class="hitl-banner">
+                    <div>
+                        <div class="text">🔍 Human Review Required</div>
+                        <div class="sub">${allUncertain.length} item(s) with low confidence — click ✓ or ✗ below</div>
+                    </div>
+                    <button class="submit-btn" id="submitBtn" onclick="submitReview()" disabled>Select items</button>
+                </div>
+            ` : '';
+            
+            $('summaryBody').innerHTML = `
+                ${successMsg}
+                ${hitl}
+                <div class="columns">
+                    <div class="column col-veg">
+                        <div class="col-header">
+                            <span class="col-title">🥬 Vegetarian</span>
+                            <span class="col-count">${highConfItems.length}</span>
+                        </div>
+                        <ul class="items">
+                            ${highConfItems.map(i => {
+                                const lowConf = (i.confidence || 1) < 0.5;
+                                return `
+                                <li class="item ${lowConf ? 'low-conf' : ''}">
+                                    <div class="item-info">
+                                        <div class="item-name">${i.name}</div>
+                                        <div class="item-meta">
+                                            ${((i.confidence||0)*100).toFixed(0)}% conf · Image ${i.source_image||1}
+                                            ${lowConf ? '<span class="conf-warning">⚠️ Low</span>' : ''}
+                                        </div>
+                                    </div>
+                                    <div class="item-price">$${i.price.toFixed(2)}</div>
+                                </li>
+                            `}).join('') || '<li class="empty">No items yet</li>'}
+                        </ul>
+                    </div>
+                    <div class="column col-review">
+                        <div class="col-header">
+                            <span class="col-title">❓ Needs Review</span>
+                            <span class="col-count">${allUncertain.length}</span>
+                        </div>
+                        <ul class="items">
+                            ${allUncertain.map(i => `
+                                <li class="item low-conf" data-name="${i.name}">
+                                    <div class="item-info">
+                                        <div class="item-name">${i.name}</div>
+                                        <div class="item-meta">
+                                            <span class="conf-warning">⚠️ ${((i.confidence||0)*100).toFixed(0)}%</span>
+                                            · Img ${i.source_image||1}
+                                            ${i.suggested_classification !== null && i.suggested_classification !== undefined ? ` · AI: ${i.suggested_classification ? '✓ veg' : '✗ not'}` : ''}
+                                        </div>
+                                    </div>
+                                    <div class="review-actions">
+                                        <button class="review-btn review-btn-yes" onclick="setCorrection('${i.name}',true)" title="Mark as vegetarian">✓</button>
+                                        <button class="review-btn review-btn-no" onclick="setCorrection('${i.name}',false)" title="Mark as NOT vegetarian">✗</button>
+                                    </div>
+                                    <div class="item-price">$${i.price.toFixed(2)}</div>
+                                </li>
+                            `).join('') || '<li class="empty">All items classified! 🎉</li>'}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            // Build by-image data with ALL 4 images
+            const byImg = {};
+            for (let i = 1; i <= 4; i++) byImg[i] = { veg: [], unc: [], sum: 0 };
+            
+            [...highConfItems].forEach(item => {
+                const n = item.source_image || 1;
+                if (!byImg[n]) byImg[n] = { veg: [], unc: [], sum: 0 };
+                byImg[n].veg.push(item);
+                byImg[n].sum += item.price;
+            });
+            
+            [...allUncertain].forEach(item => {
+                const n = item.source_image || 1;
+                if (!byImg[n]) byImg[n] = { veg: [], unc: [], sum: 0 };
+                byImg[n].unc.push(item);
+            });
+            
+            // Filter out empty images (no items)
+            const activeImages = Object.entries(byImg).filter(([n, d]) => d.veg.length > 0 || d.unc.length > 0);
+            
+            $('imagesBody').innerHTML = `
+                <div class="images-grid">
+                    ${activeImages.map(([n, d]) => `
+                        <div class="image-card">
+                            <div class="image-header">
+                                <img class="image-thumb" src="${urls[n-1]||''}" onclick="openModal('${urls[n-1]||''}')" onerror="this.style.background='#e5e7eb'">
+                                <div class="image-meta">
+                                    <h4>Image ${n}</h4>
+                                    <p>${d.veg.length} vegetarian · ${d.unc.length} review</p>
+                                </div>
+                                <div class="image-total">
+                                    <div class="amount">$${d.sum.toFixed(2)}</div>
+                                    <div class="label">Subtotal</div>
+                                </div>
+                            </div>
+                            <div class="image-lists">
+                                <div class="image-list">
+                                    <div class="image-list-title">🥬 Vegetarian</div>
+                                    ${d.veg.map(i => `<div class="image-list-item"><span class="name">${i.name}</span><span class="price">$${i.price.toFixed(2)}</span></div>`).join('') || '<div class="empty">None</div>'}
+                                </div>
+                                <div class="image-list">
+                                    <div class="image-list-title">❓ Review</div>
+                                    ${d.unc.map(i => `<div class="image-list-item"><span class="name">${i.name}</span><span class="price">$${i.price.toFixed(2)}</span></div>`).join('') || '<div class="empty">None</div>'}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            renderDataTable(data.all_items || []);
+        }
+        
+        let allItemsData = [];
+        
+        let currentSort = { column: null, direction: 'asc' };
+        
+        function renderDataTable(items, preserveSort = false) {
+            allItemsData = items;
+            
+            if (!items || items.length === 0) {
+                $('dataSection').style.display = 'none';
+                return;
+            }
+            
+            $('dataSection').style.display = 'block';
+            $('dataCount').textContent = `${items.length} items`;
+            
+            let sortedItems = [...items];
+            if (preserveSort && currentSort.column) {
+                sortedItems = sortItems(sortedItems, currentSort.column, currentSort.direction);
+            }
+            
+            $('dataTableBody').innerHTML = sortedItems.map((item, idx) => {
+                const vegClass = item.is_vegetarian === true ? 'yes' : item.is_vegetarian === false ? 'no' : 'unknown';
+                const vegLabel = item.is_vegetarian === true ? '✓ Yes' : item.is_vegetarian === false ? '✗ No' : '? Unknown';
+                const evidence = (item.evidence || []).slice(0, 2).join('; ') || '-';
+                const ingredients = (item.related_ingredients || []).join(', ') || '-';
+                const reasoning = item.reasoning || '-';
+                
+                return `
+                    <tr>
+                        <td class="cell-row">${idx + 1}</td>
+                        <td><span class="cell-img">Image ${item.source_image || 1}</span></td>
+                        <td><strong>${item.name}</strong></td>
+                        <td>$${item.price.toFixed(2)}</td>
+                        <td><span class="cell-veg ${vegClass}">${vegLabel}</span></td>
+                        <td class="cell-conf">${((item.confidence || 0) * 100).toFixed(0)}%</td>
+                        <td><span class="cell-method">${item.method || 'n/a'}</span></td>
+                        <td class="cell-evidence" title="${ingredients}">${ingredients}</td>
+                        <td class="cell-evidence" title="${evidence}">${evidence}</td>
+                        <td class="cell-reasoning" title="${reasoning}">${reasoning.length > 40 ? reasoning.slice(0, 40) + '...' : reasoning}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function sortItems(items, column, direction) {
+            return items.sort((a, b) => {
+                let valA = a[column];
+                let valB = b[column];
+                
+                if (valA === null || valA === undefined) valA = '';
+                if (valB === null || valB === undefined) valB = '';
+                
+                if (column === 'price' || column === 'confidence' || column === 'source_image') {
+                    valA = Number(valA) || 0;
+                    valB = Number(valB) || 0;
+                } else if (column === 'is_vegetarian') {
+                    valA = valA === true ? 1 : valA === false ? 0 : -1;
+                    valB = valB === true ? 1 : valB === false ? 0 : -1;
+                } else {
+                    valA = String(valA).toLowerCase();
+                    valB = String(valB).toLowerCase();
+                }
+                
+                if (valA < valB) return direction === 'asc' ? -1 : 1;
+                if (valA > valB) return direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+        
+        function sortTable(column) {
+            document.querySelectorAll('.data-table th.sortable').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+            });
+            
+            if (currentSort.column === column) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.column = column;
+                currentSort.direction = 'asc';
+            }
+            
+            const th = document.querySelector(`.data-table th[data-sort="${column}"]`);
+            if (th) {
+                th.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+            }
+            
+            renderDataTable(allItemsData, true);
+        }
+        
+        function downloadCSV() {
+            if (!allItemsData.length) return;
+            
+            const headers = ['#', 'Image', 'Item Name', 'Price', 'Currency', 'Is Vegetarian', 'Confidence', 'Method', 'Related Ingredients', 'Evidence', 'Reasoning', 'Category'];
+            const rows = allItemsData.map((item, idx) => [
+                idx + 1,
+                `Image ${item.source_image || 1}`,
+                `"${item.name}"`,
+                item.price.toFixed(2),
+                item.currency || 'USD',
+                item.is_vegetarian === true ? 'Yes' : item.is_vegetarian === false ? 'No' : 'Unknown',
+                ((item.confidence || 0) * 100).toFixed(0) + '%',
+                item.method || '',
+                `"${(item.related_ingredients || []).join(', ')}"`,
+                `"${(item.evidence || []).join('; ')}"`,
+                `"${(item.reasoning || '').replace(/"/g, '""')}"`,
+                item.category || ''
+            ]);
+            
+            const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `menu_data_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
