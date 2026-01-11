@@ -98,10 +98,8 @@ tmp/
 temp/
 *.tmp
 
-# Test data (generated images, keep ground_truth.json)
-tests/data/menus/*.png
-!tests/data/menus/.gitkeep
-!tests/data/menus/ground_truth.json
+# HITL feedback log (runtime generated)
+# Note: Test images in tests/data/menus/ ARE tracked for reproducibility
 
 # HITL feedback
 /tmp/hitl_feedback.jsonl
