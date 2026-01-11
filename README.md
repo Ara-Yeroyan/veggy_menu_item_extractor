@@ -571,3 +571,19 @@ For in-depth technical details, see **[SYSTEM_BREAKDOWN.md](SYSTEM_BREAKDOWN.md)
 - Knowledge base is manually curated (expandable)
 - Vector store is ephemeral (add persistence for production)
 - No multi-language support yet
+
+
+---
+
+## 👤 Author
+
+**Ara Yeroyan** — AI/ML Engineer
+
+For questions, consulting, or collaboration opportunities — feel free to connect!
+
+<br>
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/ara-yeroyan/)
+&nbsp;&nbsp;
+*Open for consulting & collaboration*
+
