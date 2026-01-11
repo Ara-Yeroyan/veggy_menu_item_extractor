@@ -530,6 +530,30 @@ Test data in `tests/data/menus/`:
 5. Upload menu images → Get results!
 ```
 
+## UI Demo
+
+The web interface provides an intuitive way to upload menu images and view classification results.
+
+### Main Interface
+Upload menu images and see results with confidence scores, classification methods, and per-image breakdowns.
+
+![Main UI with Results](ui/demo_screenshot/main_ui_breakdown.png)
+
+### Data Table View
+Comprehensive table showing all extracted items with sortable columns, filtering, and CSV export.
+
+![Data Table View](ui/demo_screenshot/main_ui_table_view.png)
+
+### HITL Review Mode
+Review uncertain classifications and provide corrections for items below the confidence threshold.
+
+![Review Interface](ui/demo_screenshot/review_submit.png)
+
+### Review Results Table
+After submitting reviews, see the updated results with human corrections applied.
+
+![Review Results](ui/demo_screenshot/review_table.png)
+
 ## Detailed Documentation
 
 For in-depth technical details, see **[SYSTEM_BREAKDOWN.md](SYSTEM_BREAKDOWN.md)**:
