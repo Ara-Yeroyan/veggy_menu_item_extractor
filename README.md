@@ -581,11 +581,8 @@ For in-depth technical details, see **[SYSTEM_BREAKDOWN.md](SYSTEM_BREAKDOWN.md)
 
 For questions, consulting, or collaboration opportunities — feel free to connect!
 
-<p>
-  <a href="https://www.linkedin.com/in/ara-yeroyan/">
-    <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" />
-  </a>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <em>Open for consulting & collaboration</em>
-</p>
+<table><tr>
+  <td><a href="https://www.linkedin.com/in/ara-yeroyan/"><img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" /></a></td>
+  <td><em>Open for consulting & collaboration</em></td>
+</tr></table>
 
